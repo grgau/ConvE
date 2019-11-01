@@ -133,7 +133,7 @@ class Lstm(torch.nn.Module):
         self.emb_dim1 = args.embedding_shape1
         self.emb_dim2 = args.embedding_dim // self.emb_dim1
 
-        self.rnn = torch.nn.LSTM(input_size=400, hidden_size=args.hidden_size, num_layers=1, batch_first=True)
+        self.rnn = torch.nn.LSTM(input_size=200, hidden_size=args.hidden_size, num_layers=1, batch_first=True)
         self.fc = torch.nn.Linear(args.hidden_size,args.embedding_dim)
         self.register_parameter('b', Parameter(torch.zeros(num_entities)))
 
@@ -151,7 +151,12 @@ class Lstm(torch.nn.Module):
         # print("stacked")
         # print(stacked_inputs.shape)
 
-        x = stacked_inputs.view(128, 1, -1)
+        x = stacked_inputs.view(128, 2, -1)
+
+        # print("stacked pos view")
+        # print(x)
+        # print(x.shape)
+
         x, (hn, cn) = self.rnn(x)
         x = self.fc(x[:, -1, :])
 
@@ -159,6 +164,12 @@ class Lstm(torch.nn.Module):
         # print(x)
         # print(x.shape)
         # print(x.type)
+
+        x = F.log_softmax(x, dim=1)
+
+        # print("valor de x pós log_softmax")
+        # print(x)
+        # print(x.shape)
 
         x = torch.mm(x, self.emb_e.weight.transpose(1,0))
         x += self.b.expand_as(x)
