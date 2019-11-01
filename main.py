@@ -11,7 +11,7 @@ from os.path import join
 import torch.backends.cudnn as cudnn
 
 from evaluation import ranking_and_hits
-from model import ConvE, DistMult, Complex, Combine, Lstm
+from model import ConvE, DistMult, Complex, Lstm
 
 from spodernet.preprocessing.pipeline import Pipeline, DatasetStreamer
 from spodernet.preprocessing.processors import JsonLoaderProcessors, Tokenizer, AddToVocab, SaveLengthsToState, StreamToHDF5, SaveMaxLengthsToState, CustomTokenizer
@@ -95,8 +95,6 @@ def main(args, model_path):
         model = DistMult(args, vocab['e1'].num_token, vocab['rel'].num_token)
     elif args.model == 'complex':
         model = Complex(args, vocab['e1'].num_token, vocab['rel'].num_token)
-    elif args.model == 'combine':
-        model = Combine(args, vocab['e1'].num_token, vocab['rel'].num_token)
     elif args.model == 'lstm':
         model = Lstm(args, vocab['e1'].num_token, vocab['rel'].num_token)
     else:
