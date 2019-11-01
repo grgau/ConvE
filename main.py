@@ -195,9 +195,9 @@ if __name__ == '__main__':
     # parse console parameters and set global variables
     Config.backend = 'pytorch'
     
-    if torch.cuda.is_available()
+    if torch.cuda.is_available():
         Config.cuda = True
-    else
+    else:
         Config.cuda = False
     
     Config.embedding_dim = args.embedding_dim
