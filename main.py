@@ -11,7 +11,7 @@ from os.path import join
 import torch.backends.cudnn as cudnn
 
 from evaluation import ranking_and_hits
-from model import ConvE, DistMult, Complex
+from model import ConvE, DistMult, Complex, Combine, Lstm
 
 from spodernet.preprocessing.pipeline import Pipeline, DatasetStreamer
 from spodernet.preprocessing.processors import JsonLoaderProcessors, Tokenizer, AddToVocab, SaveLengthsToState, StreamToHDF5, SaveMaxLengthsToState, CustomTokenizer
@@ -95,6 +95,10 @@ def main(args, model_path):
         model = DistMult(args, vocab['e1'].num_token, vocab['rel'].num_token)
     elif args.model == 'complex':
         model = Complex(args, vocab['e1'].num_token, vocab['rel'].num_token)
+    elif args.model == 'combine':
+        model = Combine(args, vocab['e1'].num_token, vocab['rel'].num_token)
+    elif args.model == 'lstm':
+        model = Lstm(args, vocab['e1'].num_token, vocab['rel'].num_token)
     else:
         log.info('Unknown model: {0}', args.model)
         raise Exception("Unknown model!")
@@ -107,7 +111,8 @@ def main(args, model_path):
     train_batcher.subscribe_to_start_of_epoch_event(eta)
     train_batcher.subscribe_to_events(LossHook('train', print_every_x_batches=args.log_interval))
 
-    model.cuda()
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    model.to(device)
     if args.resume:
         model_params = torch.load(model_path)
         print(model)
@@ -146,7 +151,6 @@ def main(args, model_path):
             opt.step()
 
             train_batcher.state.loss = loss.cpu()
-
 
         print('saving to {0}'.format(model_path))
         torch.save(model.state_dict(), model_path)
@@ -190,7 +194,12 @@ if __name__ == '__main__':
 
     # parse console parameters and set global variables
     Config.backend = 'pytorch'
-    Config.cuda = True
+    
+    if torch.cuda.is_available()
+        Config.cuda = True
+    else
+        Config.cuda = False
+    
     Config.embedding_dim = args.embedding_dim
     #Logger.GLOBAL_LOG_LEVEL = LogLevel.DEBUG
 
