@@ -185,6 +185,8 @@ if __name__ == '__main__':
     parser.add_argument('--use-bias', action='store_true', help='Use a bias in the convolutional layer. Default: True')
     parser.add_argument('--label-smoothing', type=float, default=0.1, help='Label smoothing value to use. Default: 0.1')
     parser.add_argument('--hidden-size', type=int, default=9728, help='The side of the hidden layer. The required size changes with the size of the embeddings. Default: 9728 (embedding size 200).')
+    parser.add_argument('--timesteps', type=int, default=1, help='Tamanho de timestep da RNN. Default=1' )
+    parser.add_argument('--num-layers', type=int, default=1, help='Quantidade de layers. Default=1' )
 
     args = parser.parse_args()
 
