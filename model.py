@@ -130,10 +130,13 @@ class Lstm(torch.nn.Module):
         self.emb_rel = torch.nn.Embedding(num_relations, args.embedding_dim, padding_idx=0)
         self.loss = torch.nn.BCELoss()
         self.batch_size = args.batch_size
+        self.timesteps = args.timesteps
+        self.embedding_dim = args.embedding_dim
+
         self.emb_dim1 = args.embedding_shape1
         self.emb_dim2 = args.embedding_dim // self.emb_dim1
 
-        self.rnn = torch.nn.LSTM(input_size=200, hidden_size=args.hidden_size, num_layers=1, batch_first=True)
+        self.rnn = torch.nn.LSTM(input_size=int(self.embedding_dim/self.timesteps * args.num_layers * 2), hidden_size=args.hidden_size, num_layers=args.num_layers, batch_first=True)
         self.fc = torch.nn.Linear(args.hidden_size,args.embedding_dim)
         self.register_parameter('b', Parameter(torch.zeros(num_entities)))
 
@@ -151,7 +154,7 @@ class Lstm(torch.nn.Module):
         # print("stacked")
         # print(stacked_inputs.shape)
 
-        x = stacked_inputs.view(128, 2, -1)
+        x = stacked_inputs.view(self.batch_size, self.timesteps, -1)
 
         # print("stacked pos view")
         # print(x)
