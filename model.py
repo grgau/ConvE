@@ -138,8 +138,8 @@ class Lstm(torch.nn.Module):
         self.emb_dim1 = args.embedding_shape1
         self.emb_dim2 = args.embedding_dim // self.emb_dim1
 
-        self.rnn1 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True, dropout=self.inp_drop)
-        self.rnn2 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True, dropout=self.inp_drop)
+        self.rnn1 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps, hidden_size=args.hidden_size//2 * args.num_layers, num_layers=args.num_layers, batch_first=True, dropout=args.input_drop)
+        self.rnn2 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps, hidden_size=args.hidden_size//2 * args.num_layers, num_layers=args.num_layers, batch_first=True, dropout=args.input_drop)
         self.fc = torch.nn.Linear(args.hidden_size,args.embedding_dim)
         self.register_parameter('b', Parameter(torch.zeros(num_entities)))
 
@@ -152,42 +152,22 @@ class Lstm(torch.nn.Module):
     def forward(self, e1, rel):
         e1_embedded= self.emb_e(e1)
         rel_embedded = self.emb_rel(rel)
-        # stacked_inputs = torch.cat([e1_embedded, rel_embedded], 2)
-
-        # print("stacked")
-        # print(stacked_inputs.shape)
 
         x1 = e1_embedded.view(self.batch_size, self.timesteps, -1)
         x2 = rel_embedded.view(self.batch_size, self.timesteps, -1)
 
-        # print("stacked pos view")
-        # print(x)
-        # print(x.shape)
-
         x1, (hn1, cn1) = self.rnn1(x1)
         x2, (hn2, cn2) = self.rnn2(x2)
 
-        x = torch.cat([x1, x2], 2)
-        x = self.fc(x[:, -1, :])
+        x = torch.cat([hn1, hn2], 2)
+        x = x.view(x.shape[1], -1)
+
+        x = self.fc(x)
         x = self.hidden_drop(x)
-
-        # print("valor de x pós fc")
-        # print(x)
-        # print(x.shape)
-        # print(x.type)
-
         x = F.log_softmax(x, dim=1)
-
-        # print("valor de x pós log_softmax")
-        # print(x)
-        # print(x.shape)
 
         x = torch.mm(x, self.emb_e.weight.transpose(1,0))
         x += self.b.expand_as(x)
         pred = torch.sigmoid(x)
-
-        # print("pred")
-        # print(pred.shape)
-        # print(pred.type)
 
         return pred
