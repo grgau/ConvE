@@ -136,7 +136,8 @@ class Lstm(torch.nn.Module):
         self.emb_dim1 = args.embedding_shape1
         self.emb_dim2 = args.embedding_dim // self.emb_dim1
 
-        self.rnn = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers * 2, hidden_size=args.hidden_size, num_layers=args.num_layers, batch_first=True)
+        self.rnn1 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True)
+        self.rnn2 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True)
         self.fc = torch.nn.Linear(args.hidden_size,args.embedding_dim)
         self.register_parameter('b', Parameter(torch.zeros(num_entities)))
 
@@ -149,18 +150,22 @@ class Lstm(torch.nn.Module):
     def forward(self, e1, rel):
         e1_embedded= self.emb_e(e1)
         rel_embedded = self.emb_rel(rel)
-        stacked_inputs = torch.cat([e1_embedded, rel_embedded], 2)
+        # stacked_inputs = torch.cat([e1_embedded, rel_embedded], 2)
 
         # print("stacked")
         # print(stacked_inputs.shape)
 
-        x = stacked_inputs.view(self.batch_size, self.timesteps, -1)
+        x1 = e1_embedded.view(self.batch_size, self.timesteps, -1)
+        x2 = rel_embedded.view(self.batch_size, self.timesteps, -1)
 
         # print("stacked pos view")
         # print(x)
         # print(x.shape)
 
-        x, (hn, cn) = self.rnn(x)
+        x1, (hn1, cn1) = self.rnn1(x1)
+        x2, (hn2, cn2) = self.rnn2(x2)
+
+        x = torch.cat([x1, x2], 2)
         x = self.fc(x[:, -1, :])
 
         # print("valor de x pós fc")
