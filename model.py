@@ -129,6 +129,8 @@ class Lstm(torch.nn.Module):
         self.emb_e = torch.nn.Embedding(num_entities, args.embedding_dim, padding_idx=0)
         self.emb_rel = torch.nn.Embedding(num_relations, args.embedding_dim, padding_idx=0)
         self.loss = torch.nn.BCELoss()
+        self.emb_dim1 = args.embedding_shape1
+        self.emb_dim2 = args.embedding_dim // self.emb_dim1
         self.batch_size = args.batch_size
         self.timesteps = args.timesteps
         self.embedding_dim = args.embedding_dim
@@ -136,8 +138,8 @@ class Lstm(torch.nn.Module):
         self.emb_dim1 = args.embedding_shape1
         self.emb_dim2 = args.embedding_dim // self.emb_dim1
 
-        self.rnn1 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True)
-        self.rnn2 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True)
+        self.rnn1 = torch.nn.LSTM(input_size=20, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True)
+        self.rnn2 = torch.nn.LSTM(input_size=20, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True)
         self.fc = torch.nn.Linear(args.hidden_size,args.embedding_dim)
         self.register_parameter('b', Parameter(torch.zeros(num_entities)))
 
@@ -148,19 +150,23 @@ class Lstm(torch.nn.Module):
         xavier_normal_(self.emb_rel.weight.data)
         
     def forward(self, e1, rel):
-        e1_embedded= self.emb_e(e1)
-        rel_embedded = self.emb_rel(rel)
+        e1_embedded= self.emb_e(e1).view(-1, 1, self.emb_dim1, self.emb_dim2)
+        rel_embedded = self.emb_rel(rel).view(-1, 1, self.emb_dim1, self.emb_dim2)
         # stacked_inputs = torch.cat([e1_embedded, rel_embedded], 2)
 
         # print("stacked")
         # print(stacked_inputs.shape)
 
-        x1 = e1_embedded.view(self.batch_size, self.timesteps, -1)
-        x2 = rel_embedded.view(self.batch_size, self.timesteps, -1)
+        x1 = e1_embedded.view(self.batch_size, 10, -1)
+        x2 = rel_embedded.view(self.batch_size, 10, -1)
 
-        # print("stacked pos view")
-        # print(x)
-        # print(x.shape)
+        # print("x1 pos view")
+        # print(x1)
+        # print(x1.shape)
+
+        # print("x2 pos view")
+        # print(x2)
+        # print(x2.shape)
 
         x1, (hn1, cn1) = self.rnn1(x1)
         x2, (hn2, cn2) = self.rnn2(x2)
