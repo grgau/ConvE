@@ -136,7 +136,7 @@ class Lstm(torch.nn.Module):
         self.emb_dim1 = args.embedding_shape1
         self.emb_dim2 = args.embedding_dim // self.emb_dim1
 
-        self.rnn = torch.nn.LSTM(input_size=int(self.embedding_dim/self.timesteps * args.num_layers * 2), hidden_size=args.hidden_size, num_layers=args.num_layers, batch_first=True)
+        self.rnn = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers * 2, hidden_size=args.hidden_size, num_layers=args.num_layers, batch_first=True)
         self.fc = torch.nn.Linear(args.hidden_size,args.embedding_dim)
         self.register_parameter('b', Parameter(torch.zeros(num_entities)))
 
