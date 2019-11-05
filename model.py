@@ -128,6 +128,8 @@ class Lstm(torch.nn.Module):
         super(Lstm, self).__init__()
         self.emb_e = torch.nn.Embedding(num_entities, args.embedding_dim, padding_idx=0)
         self.emb_rel = torch.nn.Embedding(num_relations, args.embedding_dim, padding_idx=0)
+        self.hidden_drop = torch.nn.Dropout(args.hidden_drop)
+        self.inp_drop = torch.nn.Dropout(args.input_drop)
         self.loss = torch.nn.BCELoss()
         self.batch_size = args.batch_size
         self.timesteps = args.timesteps
@@ -136,8 +138,8 @@ class Lstm(torch.nn.Module):
         self.emb_dim1 = args.embedding_shape1
         self.emb_dim2 = args.embedding_dim // self.emb_dim1
 
-        self.rnn1 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True)
-        self.rnn2 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True)
+        self.rnn1 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True, dropout=self.inp_drop)
+        self.rnn2 = torch.nn.LSTM(input_size=self.embedding_dim//self.timesteps * args.num_layers, hidden_size=args.hidden_size//2, num_layers=args.num_layers, batch_first=True, dropout=self.inp_drop)
         self.fc = torch.nn.Linear(args.hidden_size,args.embedding_dim)
         self.register_parameter('b', Parameter(torch.zeros(num_entities)))
 
@@ -167,6 +169,7 @@ class Lstm(torch.nn.Module):
 
         x = torch.cat([x1, x2], 2)
         x = self.fc(x[:, -1, :])
+        x = self.hidden_drop(x)
 
         # print("valor de x pós fc")
         # print(x)
